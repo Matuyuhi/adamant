@@ -1,0 +1,35 @@
+[package]
+name = "adamant"
+version = "0.1.0"
+edition = "2021"
+description = "A high-performance, GPU-accelerated terminal emulator"
+authors = ["Matuyuhi"]
+license = "MIT"
+
+[dependencies]
+# Graphics - WebGPU implementation in Rust
+# Note: wgpu 28 requires Rust 1.92+. Using 24 for Rust 1.91 compatibility.
+wgpu = "24"
+
+# Windowing - Cross-platform window management
+winit = "0.30"
+
+# Minimal blocking executor for async operations
+pollster = "0.4"
+
+# Byte manipulation utilities (useful for GPU buffer handling)
+bytemuck = { version = "1", features = ["derive"] }
+
+# Logging
+log = "0.4"
+env_logger = "0.11"
+
+# TODO: Phase 2 - Font rendering
+# swash = "0.1"
+
+# TODO: Phase 3 - PTY handling
+# portable-pty = "0.8"
+
+[profile.release]
+opt-level = 3
+lto = true
