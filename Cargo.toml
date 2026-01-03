@@ -8,7 +8,6 @@ license = "MIT"
 
 [dependencies]
 # Graphics - WebGPU implementation in Rust
-# Note: wgpu 28 requires Rust 1.92+. Using 24 for Rust 1.91 compatibility.
 wgpu = "28.0.0"
 
 # Windowing - Cross-platform window management
