@@ -87,12 +87,22 @@ impl Renderer {
             .copied()
             .unwrap_or(surface_caps.formats[0]);
 
+        // Prefer Mailbox for low latency, fallback to Fifo
+        let present_mode = if surface_caps
+            .present_modes
+            .contains(&wgpu::PresentMode::Mailbox)
+        {
+            wgpu::PresentMode::Mailbox
+        } else {
+            wgpu::PresentMode::Fifo
+        };
+
         let config = wgpu::SurfaceConfiguration {
             usage: wgpu::TextureUsages::RENDER_ATTACHMENT,
             format: surface_format,
             width: size.width,
             height: size.height,
-            present_mode: wgpu::PresentMode::Fifo, // VSync enabled
+            present_mode,
             alpha_mode: surface_caps.alpha_modes[0],
             view_formats: vec![],
             desired_maximum_frame_latency: 2,
