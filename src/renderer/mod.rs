@@ -62,7 +62,8 @@ impl Renderer {
             })
             .await?;
 
-        log::info!("Using adapter: {:?}", adapter.get_info().name);
+        log::info!("Using adapter: {:?}", adapter.get_info());
+        log::info!("wgpu::Limits: {:?}", wgpu::Limits::default());
 
         // Request device and queue
         let (device, queue) = adapter
@@ -97,13 +98,28 @@ impl Renderer {
             wgpu::PresentMode::Fifo
         };
 
+        // Prefer PreMultiplied alpha mode for transparency
+        let alpha_mode = if surface_caps
+            .alpha_modes
+            .contains(&wgpu::CompositeAlphaMode::PreMultiplied)
+        {
+            wgpu::CompositeAlphaMode::PreMultiplied
+        } else if surface_caps
+            .alpha_modes
+            .contains(&wgpu::CompositeAlphaMode::PostMultiplied)
+        {
+            wgpu::CompositeAlphaMode::PostMultiplied
+        } else {
+            surface_caps.alpha_modes[0]
+        };
+
         let config = wgpu::SurfaceConfiguration {
             usage: wgpu::TextureUsages::RENDER_ATTACHMENT,
             format: surface_format,
             width: size.width,
             height: size.height,
             present_mode,
-            alpha_mode: surface_caps.alpha_modes[0],
+            alpha_mode,
             view_formats: vec![],
             desired_maximum_frame_latency: 2,
         };
@@ -160,10 +176,10 @@ impl Renderer {
                     ops: wgpu::Operations {
                         // Clear to dark background color
                         load: wgpu::LoadOp::Clear(wgpu::Color {
-                            r: 0.05,
-                            g: 0.05,
-                            b: 0.08,
-                            a: 1.0,
+                            r: 0.0,
+                            g: 0.0,
+                            b: 0.0,
+                            a: 0.7,
                         }),
                         store: wgpu::StoreOp::Store,
                     },
