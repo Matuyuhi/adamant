@@ -63,10 +63,11 @@ docs/                 # 設計ドキュメント
 ## 開発フェーズ
 
 ```
-Phase 1: Window & Quad     ← 現在
+Phase 1: Window & Quad     ✅ 完了
   - ウィンドウ表示、wgpu パイプライン、インスタンシング
+  - 詳細: docs/05_instancing.md
 
-Phase 2: Text Engine
+Phase 2: Text Engine       ← 現在
   - フォント読み込み、グリフラスタライズ、テクスチャアトラス
 
 Phase 3: Terminal Logic

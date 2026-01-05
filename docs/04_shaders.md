@@ -85,44 +85,40 @@ var positions = array<vec2<f32>, 6>(
 @location(0) color: vec3<f32>,  // Rust 側の vertex buffer と対応
 ```
 
-## Phase 1: インスタンシングへの道
+## Phase 1: インスタンシング (実装完了)
 
-現在のシェーダーは頂点バッファなしで 1 つの四角形を描画しています。
-10,000 個の四角形を描くには:
+インスタンシングは `docs/05_instancing.md` で詳細に解説しています。
 
-### 1. Instance 構造体を定義
+### 現在のシェーダー構造
 
 ```wgsl
-struct Instance {
-    @location(1) offset: vec2<f32>,
-    @location(2) scale: vec2<f32>,
+// 頂点バッファから
+struct VertexInput {
+    @location(0) position: vec2<f32>,
+};
+
+// インスタンスバッファから
+struct InstanceInput {
+    @location(1) pos: vec2<f32>,
+    @location(2) size: vec2<f32>,
     @location(3) color: vec4<f32>,
 };
-```
 
-### 2. Vertex Shader を修正
-
-```wgsl
 @vertex
-fn vs_main(
-    @builtin(vertex_index) vertex_index: u32,
-    instance: Instance,
-) -> VertexOutput {
-    let base_pos = positions[vertex_index];
-    let world_pos = base_pos * instance.scale + instance.offset;
+fn vs_main(vertex: VertexInput, instance: InstanceInput) -> VertexOutput {
+    let world_pos = vertex.position * instance.size + instance.pos;
     // ...
 }
 ```
 
-### 3. Rust 側で Instance Buffer を作成
+### Rust 側
 
 ```rust
-#[repr(C)]
-#[derive(Copy, Clone, bytemuck::Pod, bytemuck::Zeroable)]
-struct Instance {
-    offset: [f32; 2],
-    scale: [f32; 2],
-    color: [f32; 4],
+// src/renderer/pipeline.rs
+pub struct Instance {
+    pub pos: [f32; 2],
+    pub size: [f32; 2],
+    pub color: [f32; 4],
 }
 ```
 
