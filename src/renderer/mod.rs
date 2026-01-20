@@ -60,22 +60,21 @@ impl Renderer {
                 compatible_surface: Some(&surface),
                 force_fallback_adapter: false,
             })
-            .await
-            .ok_or("Failed to find a suitable GPU adapter")?;
+            .await?;
 
-        log::info!("Using adapter: {:?}", adapter.get_info().name);
+        log::info!("Using adapter: {:?}", adapter.get_info());
+        log::info!("wgpu::Limits: {:?}", wgpu::Limits::default());
 
         // Request device and queue
         let (device, queue) = adapter
-            .request_device(
-                &wgpu::DeviceDescriptor {
-                    label: Some("Adamant Device"),
-                    required_features: wgpu::Features::empty(),
-                    required_limits: wgpu::Limits::default(),
-                    memory_hints: wgpu::MemoryHints::Performance,
-                },
-                None,
-            )
+            .request_device(&wgpu::DeviceDescriptor {
+                label: Some("Adamant Device"),
+                required_features: wgpu::Features::empty(),
+                required_limits: wgpu::Limits::default(),
+                experimental_features: Default::default(),
+                memory_hints: wgpu::MemoryHints::Performance,
+                trace: Default::default(),
+            })
             .await?;
 
         // Configure surface
@@ -89,13 +88,38 @@ impl Renderer {
             .copied()
             .unwrap_or(surface_caps.formats[0]);
 
+        // Prefer Mailbox for low latency, fallback to Fifo
+        let present_mode = if surface_caps
+            .present_modes
+            .contains(&wgpu::PresentMode::Mailbox)
+        {
+            wgpu::PresentMode::Mailbox
+        } else {
+            wgpu::PresentMode::Fifo
+        };
+
+        // Prefer PreMultiplied alpha mode for transparency
+        let alpha_mode = if surface_caps
+            .alpha_modes
+            .contains(&wgpu::CompositeAlphaMode::PreMultiplied)
+        {
+            wgpu::CompositeAlphaMode::PreMultiplied
+        } else if surface_caps
+            .alpha_modes
+            .contains(&wgpu::CompositeAlphaMode::PostMultiplied)
+        {
+            wgpu::CompositeAlphaMode::PostMultiplied
+        } else {
+            surface_caps.alpha_modes[0]
+        };
+
         let config = wgpu::SurfaceConfiguration {
             usage: wgpu::TextureUsages::RENDER_ATTACHMENT,
             format: surface_format,
             width: size.width,
             height: size.height,
-            present_mode: wgpu::PresentMode::Fifo, // VSync enabled
-            alpha_mode: surface_caps.alpha_modes[0],
+            present_mode,
+            alpha_mode,
             view_formats: vec![],
             desired_maximum_frame_latency: 2,
         };
@@ -147,14 +171,15 @@ impl Renderer {
                 label: Some("Render Pass"),
                 color_attachments: &[Some(wgpu::RenderPassColorAttachment {
                     view: &view,
+                    depth_slice: None,
                     resolve_target: None,
                     ops: wgpu::Operations {
                         // Clear to dark background color
                         load: wgpu::LoadOp::Clear(wgpu::Color {
-                            r: 0.05,
-                            g: 0.05,
-                            b: 0.08,
-                            a: 1.0,
+                            r: 0.0,
+                            g: 0.0,
+                            b: 0.0,
+                            a: 0.7,
                         }),
                         store: wgpu::StoreOp::Store,
                     },
@@ -162,6 +187,7 @@ impl Renderer {
                 depth_stencil_attachment: None,
                 occlusion_query_set: None,
                 timestamp_writes: None,
+                multiview_mask: None,
             });
 
             // Draw using the pipeline

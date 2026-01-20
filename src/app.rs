@@ -62,7 +62,8 @@ impl ApplicationHandler for App {
         // Create window attributes
         let window_attributes = Window::default_attributes()
             .with_title("Adamant")
-            .with_inner_size(PhysicalSize::new(1280, 720));
+            .with_inner_size(PhysicalSize::new(1280, 720))
+            .with_transparent(true);
 
         // Create the window
         let window = Arc::new(
